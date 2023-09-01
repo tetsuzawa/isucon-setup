@@ -1,0 +1,87 @@
+- name: ISUCON setup
+  hosts: isucon_servers
+  become: true
+  tasks:
+    - name: Ping my hosts
+      ansible.builtin.ping:
+
+    - name: prepare.sh
+      ansible.builtin.copy:
+        src: templates/prepare.sh
+        dest: /home/isucon/prepare.sh
+        user: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: analyze.sh
+      ansible.builtin.copy:
+        src: templates/analyze.sh
+        dest: /home/isucon/analyze.sh
+        user: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: result directory
+      ansible.builtin.file:
+        path: /home/isucon/result
+        state: directory
+        owner: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: log directory
+      ansible.builtin.file:
+        path: /home/isucon/log
+        state: directory
+        owner: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: app log directory
+      ansible.builtin.file:
+        path: /home/isucon/log/app
+        state: directory
+        owner: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: nginx log directory
+      ansible.builtin.file:
+        path: /home/isucon/log/nginx
+        state: directory
+        owner: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: nginx access log file
+      ansible.builtin.file:
+        path: /home/isucon/log/nginx/access.log
+        state: touch
+        owner: isucon
+        group: isucon
+        mode: '0666'
+
+    - name: nginx error log file
+      ansible.builtin.file:
+        path: /home/isucon/log/nginx/error.log
+        state: touch
+        owner: isucon
+        group: isucon
+        mode: '0666'
+
+    # ------------------- git -------------------
+    - name: latest stable git repository
+      ansible.builtin.apt_repository:
+        repo: ppa:git-core/ppa
+    - name: install latest git
+      ansible.builtin.apt:
+        name: git
+    - name: git config
+      ansible.builtin.copy:
+        src: templates/.gitconfig
+        dest: /home/isucon/.gitconfig
+        user: isucon
+        group: isucon
+        mode: '0644'
+
+
