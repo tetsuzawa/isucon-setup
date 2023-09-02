@@ -9,7 +9,7 @@
       ansible.builtin.copy:
         src: templates/prepare.sh
         dest: /home/isucon/prepare.sh
-        user: isucon
+        owner: isucon
         group: isucon
         mode: '0755'
 
@@ -17,7 +17,7 @@
       ansible.builtin.copy:
         src: templates/analyze.sh
         dest: /home/isucon/analyze.sh
-        user: isucon
+        owner: isucon
         group: isucon
         mode: '0755'
 
@@ -69,6 +69,23 @@
         group: isucon
         mode: '0666'
 
+    # ------------------- log rotate -------------------
+    - name: logrotate.d directory
+      ansible.builtin.file:
+        path: /home/isucon/etc/logrotate.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: logrotate nginx logs
+      ansible.builtin.copy:
+        src: templates/etc/logrotate.d/nginx
+        dest: /home/isucon/etc/logrotate.d/nginx
+        owner: root
+        group: root
+        mode: '0644'
+
     # ------------------- git -------------------
     - name: latest stable git repository
       ansible.builtin.apt_repository:
@@ -80,8 +97,58 @@
       ansible.builtin.copy:
         src: templates/.gitconfig
         dest: /home/isucon/.gitconfig
-        user: isucon
+        owner: isucon
         group: isucon
         mode: '0644'
 
+    # ------------------- openresty -------------------
+    - name: install wget
+      ansible.builtin.apt:
+        name: wget
+    - name: install gnupg
+      ansible.builtin.apt:
+        name: gnupg
+    - name: install ca-certificates
+      ansible.builtin.apt:
+        name: ca-certificates
 
+    - name: add openresty gpg key
+      ansible.builtin.apt_key:
+        url: https://openresty.org/package/pubkey.gpg
+        keyring: /usr/share/keyrings/openresty.gpg
+    - name: add openresty apt repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch={{ ansible_architecture }} signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu {{ ansible_distribution_release }} main"
+        filename: openresty
+
+    - name: apt update
+      ansible.builtin.apt:
+        update_cache: yes
+    - name: install openresty
+      ansible.builtin.apt:
+        name: openresty
+        state: present
+
+    - name: openresty config directory
+      ansible.builtin.copy:
+        src: templates/etc/openresty
+        dest: /home/isucon/etc/openresty
+        owner: isucon
+        group: isucon
+        mode: '0755'
+
+    - name: openresty systemd unit file
+      ansible.builtin.copy:
+        src: templates/lib/systemd/system/openresty.service
+        dest: /lib/systemd/system/openresty.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: daemon-reload
+      ansible.builtin.copy:
+        src: templates/lib/systemd/system/openresty.service
+        dest: /lib/systemd/system/openresty.service
+        owner: root
+        group: root
+        mode: '0644'
