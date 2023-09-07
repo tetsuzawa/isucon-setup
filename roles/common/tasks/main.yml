@@ -1,0 +1,8 @@
+- name: ISUCON setup
+  become: true
+  tasks:
+    - name: Ping my hosts
+      ansible.builtin.ping:
+
+    - name: Deploy key
+
