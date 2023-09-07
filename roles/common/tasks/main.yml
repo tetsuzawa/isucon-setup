@@ -1,8 +1,30 @@
-- name: ISUCON setup
-  become: true
-  tasks:
-    - name: Ping my hosts
-      ansible.builtin.ping:
+- name: Ping my hosts
+  ansible.builtin.ping:
 
-    - name: Deploy key
+
+# ---------------- Deploy key ----------------
+- name: Deploy private key
+  ansible.builtin.copy:
+      src: "{{ local_deploy_private_key_path }}"
+      dest: /home/isucon/.ssh/id_rsa
+      owner: isucon
+      group: isucon
+      mode: 0600
+- name: Deploy public key
+  ansible.builtin.copy:
+    src: "{{ local_deploy_public_key_path }}"
+    dest: /home/isucon/.ssh/id_rsa.pub
+    owner: isucon
+    group: isucon
+    mode: 0600
+- name: Add Deploy public key to authorized_keys
+  ansible.builtin.blockinfile:
+    path: /home/isucon/.ssh/authorized_keys
+    block: "{{ lookup('file', '{{ local_deploy_public_key_path }}') }}"
+    marker: ""
+    owner: isucon
+    group: isucon
+    mode: 0644
+
+
 

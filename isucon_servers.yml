@@ -1,3 +1,4 @@
 - hosts: isucon_servers
+  become: true
   roles:
     - common
