@@ -1,8 +1,0 @@
-/home/isucon/log/app/journal.log {
-  missingok
-  ifempty
-  nocompress
-  copytruncate
-  rotate 10
-  su isucon isucon
-}
