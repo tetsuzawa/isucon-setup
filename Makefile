@@ -1,5 +1,5 @@
 list-all-hosts:
-	ansible -i inventory.yaml --list-hosts all
+	ansible -i inventories --list-hosts all
 
 run:
-	ansible-playbook -v -i inventory.yaml playbook.yaml
+	ansible-playbook sites.yml -vv

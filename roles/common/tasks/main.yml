@@ -1,15 +1,14 @@
 - name: Ping my hosts
   ansible.builtin.ping:
 
-
 # ---------------- Deploy key ----------------
 - name: Deploy private key
   ansible.builtin.copy:
-      src: "{{ local_deploy_private_key_path }}"
-      dest: /home/isucon/.ssh/id_rsa
-      owner: isucon
-      group: isucon
-      mode: 0600
+    src: "{{ local_deploy_private_key_path }}"
+    dest: /home/isucon/.ssh/id_rsa
+    owner: isucon
+    group: isucon
+    mode: 0600
 - name: Deploy public key
   ansible.builtin.copy:
     src: "{{ local_deploy_public_key_path }}"
@@ -26,5 +25,54 @@
     group: isucon
     mode: 0644
 
+# ---------------- install latest git ----------------
+- name: latest stable git repository
+  ansible.builtin.apt_repository:
+    repo: ppa:git-core/ppa
+- name: install latest git
+  ansible.builtin.apt:
+    update_cache: true
+    name: git
+
+# ---------------- git init ----------------
+# 冪等に動作しないので要注意
+# リセットしたいときは次のコマンドを実行する
+# `git ls-files | xargs rm -rfv && rm -rf .git`
+- name: ssh_config git
+  ansible.builtin.shell:
+    cmd: |
+      echo '\nHost github.com\n    StrictHostKeyChecking no\n' >> /etc/ssh/ssh_config
+
+- name: git init
+  become: false
+  ansible.builtin.shell:
+    cmd: |
+      git init
+      git remote add origin {{ git_repo_url }}
+      git fetch
+      git checkout -b main origin/main
+
+- name: git config
+  become: false
+  ansible.builtin.shell:
+    cmd: |
+      git config --global core.filemode false
+      git config --global user.name "isucon"
+      git config --global user.email "root@example.com"
+      git config --global color.ui auto
+      git config --global core.editor 'vim -c "set fenc=utf-8"'
+      git config --global push.default current
+      git config --global init.defaultBranch main
+      git config --global alias.st status
 
 
+# ---------------- kernel parameter tuning ----------------
+- name: kernel parameter tuning
+  ansible.builtin.shell:
+    cmd: |
+      mkdir -p /etc/sysctl.d
+      cp /home/isucon/etc/sysctl.d/99-parameter-tuning.conf /etc/sysctl.d/99-parameter-tuning.conf
+      sysctl -p /etc/sysctl.d/99-parameter-tuning.conf
+
+# ---------------- setup-tools ----------------
+- import_tasks: setup-tools.yml
