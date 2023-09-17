@@ -1,0 +1,120 @@
+# ---------------- install tools ----------------
+- name: install tools
+  ansible.builtin.package:
+    name:
+      - make
+      - jq
+      - zip
+      - unzip
+      - gzip
+      - tar
+      - dstat
+      - htop
+      - lsof
+      - vim
+      - net-tools
+      - wget
+      - curl
+      - iproute2
+      - gnupg
+      - ca-certificates
+    state: present
+
+- name: install alp
+  ansible.builtin.shell:
+    cmd: |
+      curl -sSLo alp.zip https://github.com/tkuchiki/alp/releases/download/v1.0.14/alp_linux_amd64.zip
+      unzip alp.zip
+      sudo install alp /usr/local/bin/alp
+      rm -rf alp alp.zip
+      alp --version
+      
+- name: install alp-trace
+  ansible.builtin.shell:
+    cmd: |
+      curl -sSLo alp-trace.zip https://github.com/tetsuzawa/alp-trace/releases/download/v0.0.8/alp-trace_linux_amd64.zip
+      unzip alp-trace.zip
+      sudo install alp-trace /usr/local/bin/alp-trace
+      rm -rf alp-trace alp-trace.zip
+      alp-trace --version
+      
+- name: install go
+  ansible.builtin.shell:
+    cmd: |
+      curl -sSLo go.tar.gz https://go.dev/dl/go1.21.1.linux-amd64.tar.gz
+      sudo rm -rf /usr/local/go && sudo tar -C /usr/local -xzf go.tar.gz
+      sudo rm -rf go.tar.gz
+      echo 'export PATH=/usr/local/go/bin:$PATH' >> /home/isucon/.bashrc
+      echo 'export PATH=/home/isucon/go/bin:$PATH' >> /home/isucon/.bashrc
+      echo 'export GOROOT=' >> /home/isucon/.bashrc
+      echo 'export GOPATH=/home/isucon/go' >> /home/isucon/.bashrc
+      /usr/local/go/bin/go version
+
+- name: install gh
+  ansible.builtin.shell:
+    cmd: |
+      curl -sSLO https://github.com/cli/cli/releases/download/v2.34.0/gh_2.34.0_linux_amd64.tar.gz
+      tar -xf gh_2.34.0_linux_amd64.tar.gz
+      sudo install gh_2.34.0_linux_amd64/bin/gh /usr/local/bin/gh
+      rm -rf gh_2.34.0_linux_amd64*
+      gh --version
+
+- name: install trdsql
+  ansible.builtin.shell:
+    cmd: |
+      curl -sSLO https://github.com/noborus/trdsql/releases/download/v0.10.1/trdsql_v0.10.1_linux_amd64.zip
+      unzip trdsql_v0.10.1_linux_amd64.zip
+      sudo install trdsql_v0.10.1_linux_amd64/trdsql /usr/local/bin/trdsql
+      rm -rf trdsql_v0.10.1_linux_amd64*
+      trdsql -version
+
+
+- name: install openresty repo
+  ansible.builtin.shell:
+    cmd: |
+      
+      rm -f /usr/share/keyrings/openresty.gpg
+      wget -O - https://openresty.org/package/pubkey.gpg | sudo gpg --dearmor -o /usr/share/keyrings/openresty.gpg
+      echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/openresty.gpg] http://openresty.org/package/ubuntu $(lsb_release -sc) main" | sudo tee /etc/apt/sources.list.d/openresty.list > /dev/null
+
+# openrestyをインストールしたときに他のサービスとportが競合してsetupに失敗してしまうことを防ぐ
+- name: mask openresty
+  ansible.builtin.shell:
+    cmd: |
+      sudo systemctl mask openresty
+
+- name: install openresty
+  ansible.builtin.apt:
+    update_cache: true
+    name: openresty
+
+- name: unmask openresty
+  ansible.builtin.shell:
+    cmd: |
+      sudo systemctl unmask openresty
+
+
+- name: install luarocks
+  ansible.builtin.shell:
+    cmd: |
+      wget http://luarocks.org/releases/luarocks-2.0.13.tar.gz
+      tar -xzvf luarocks-2.0.13.tar.gz
+      cd luarocks-2.0.13/
+      ./configure --prefix=/usr/local/openresty/luajit \
+        --with-lua=/usr/local/openresty/luajit/ \
+        --lua-suffix=jit \
+        --with-lua-include=/usr/local/openresty/luajit/include/luajit-2.1
+      make
+      sudo make install
+      cd ..
+      rm -rf luarocks-2.0.13 luarocks-2.0.13.tar.gz
+
+- name: install luarocks modules
+  ansible.builtin.shell:
+    cmd: |
+      sudo /usr/local/openresty/luajit/bin/luarocks install lua-resty-cookie
+      sudo /usr/local/openresty/luajit/bin/luarocks install lua-resty-jit-uuid
+
+- name: install pt-query-digest
+  ansible.builtin.apt:
+    name: percona-toolkit
