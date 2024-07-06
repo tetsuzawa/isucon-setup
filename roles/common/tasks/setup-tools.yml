@@ -28,16 +28,7 @@
       sudo install alp /usr/local/bin/alp
       rm -rf alp alp.zip
       alp --version
-      
-- name: install alp-trace
-  ansible.builtin.shell:
-    cmd: |
-      curl -sSLo alp-trace.zip https://github.com/tetsuzawa/alp-trace/releases/download/v0.0.8/alp-trace_linux_amd64.zip
-      unzip alp-trace.zip
-      sudo install alp-trace /usr/local/bin/alp-trace
-      rm -rf alp-trace alp-trace.zip
-      alp-trace --version
-      
+
 - name: install go
   ansible.builtin.shell:
     cmd: |
